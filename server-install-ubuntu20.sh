@@ -1,8 +1,7 @@
 #!/bin/bash
-# 
+#
 # The script worked on Contabo's Ubuntu 20.04 in early November 2023.
-# Please note that the Steam install path, etc. may have changed, 
-# as evidenced by the difference from @cdp1337's code!
+# Please note that the Steam install path, etc. may have changed.
 
 # Only allow running as root
 if [ "$LOGNAME" != "root" ]; then
@@ -10,72 +9,102 @@ if [ "$LOGNAME" != "root" ]; then
   exit 1
 fi
 
-# We will use this directory as a working directory for source files that need downloaded.
+#############################################
+# Stop & Remove Existing Service (Safe Check)
+#############################################
+if [ -f /etc/systemd/system/ark-island.service ]; then
+  echo "Existing ark-island.service found. Stopping and removing..."
+
+  systemctl stop ark-island 2>/dev/null || true
+  systemctl disable ark-island 2>/dev/null || true
+  rm -f /etc/systemd/system/ark-island.service
+  systemctl daemon-reload
+
+  echo "Old service removed."
+fi
+
+#############################################
+# Create Swap (16GB if not exists)
+#############################################
+if ! swapon --show | grep -q "/swapfile"; then
+  echo "Creating 16GB swapfile..."
+
+  fallocate -l 16G /swapfile || dd if=/dev/zero of=/swapfile bs=1M count=16384
+  chmod 600 /swapfile
+  mkswap /swapfile
+  swapon /swapfile
+  echo "/swapfile none swap sw 0 0" >> /etc/fstab
+
+  echo "Swap created and enabled."
+else
+  echo "Swap already exists. Skipping swap creation."
+fi
+
+#############################################
+# Working Directory
+#############################################
 [ -d /opt/game-resources ] || mkdir -p /opt/game-resources
 
-
+#############################################
 # Preliminary requirements
+#############################################
 dpkg --add-architecture i386
 apt update
 apt install -y software-properties-common apt-transport-https dirmngr ca-certificates curl wget sudo
 
-
-# Enable "non-free" repos for Ubuntu 20.04 (for steamcmd)
+#############################################
+# Enable restricted & multiverse (Ubuntu 20.04)
+#############################################
 if grep -Eq '^deb (http|https)://.*ubuntu\.com' /etc/apt/sources.list; then
-  # Normal behavior, ubuntu.com is listed in sources.list
   if [ -z "$(grep -E '^deb (http|https)://.*ubuntu\.com.*' /etc/apt/sources.list | grep 'restricted')" ]; then
-    # Enable restricted if not already enabled.
     add-apt-repository -y --enable-component=restricted
   fi
   if [ -z "$(grep -E '^deb (http|https)://.*ubuntu\.com.*' /etc/apt/sources.list | grep 'multiverse')" ]; then
-    # Enable multiverse if not already enabled.
     add-apt-repository -y --enable-component=multiverse
   fi
 else
-  # If the machine doesn't have the repos added, we need to add the full list.
   add-apt-repository -y 'deb http://archive.ubuntu.com/ubuntu/ focal restricted universe multiverse'
   add-apt-repository -y 'deb http://security.ubuntu.com/ubuntu/ focal-security restricted universe multiverse'
   add-apt-repository -y 'deb http://archive.ubuntu.com/ubuntu/ focal-updates restricted universe multiverse'
 fi
 
-
-# Install steam repo
+#############################################
+# Install Steam repo
+#############################################
 curl -s http://repo.steampowered.com/steam/archive/stable/steam.gpg > /usr/share/keyrings/steam.gpg
 echo "deb [arch=amd64,i386 signed-by=/usr/share/keyrings/steam.gpg] http://repo.steampowered.com/steam/ stable steam" > /etc/apt/sources.list.d/steam.list
 
-
-# Install steam binary and steamcmd
 apt update
 apt install -y lib32gcc-s1 steamcmd steam-launcher
 
-
-# Grab Proton from Glorious Eggroll
-# https://github.com/GloriousEggroll/proton-ge-custom
+#############################################
+# Proton GE (for ARK: Survival Ascended)
+#############################################
 PROTON_URL="https://github.com/GloriousEggroll/proton-ge-custom/releases/download/GE-Proton8-21/GE-Proton8-21.tar.gz"
 PROTON_TGZ="$(basename "$PROTON_URL")"
 PROTON_NAME="$(basename "$PROTON_TGZ" ".tar.gz")"
+
 if [ ! -e "/opt/game-resources/$PROTON_TGZ" ]; then
   wget "$PROTON_URL" -O "/opt/game-resources/$PROTON_TGZ"
 fi
 
-# Create a "steam" user account
-# This will create the account with no password, so if you need to log in with this user,
-# run `sudo passwd steam` to set a password.
+#############################################
+# Create steam user
+#############################################
 [ -d /home/steam ] || useradd -m -U steam
 
-
-# Install ARK Survival Ascended Dedicated
+#############################################
+# Install ARK: Survival Ascended Dedicated
+#############################################
 sudo -u steam /usr/games/steamcmd +login anonymous +app_update 2430930 validate +quit
 
-
-# Determine where Steam is installed
-# sometimes it's in ~/Steam, whereas other times it's in ~/.local/share/Steam
-# @todo figure out why.... this is annoying.
+#############################################
+# Detect Steam directory
+#############################################
 if [ -e "/home/steam/Steam" ]; then
   STEAMDIR="/home/steam/Steam"
 elif [ -e "/home/steam/.local/share/Steam" ]; then
   STEAMDIR="/home/steam/.local/share/Steam"
-# When I installed on Ubuntu 20.04, it was here.
 elif [ -e "/home/steam/.steam" ]; then
   STEAMDIR="/home/steam/.steam"
 else
@@ -92,18 +121,22 @@ else
   exit 1
 fi
 
-
-# Extract GE Proton into this user's Steam path
+#############################################
+# Install Proton GE
+#############################################
 [ -d "$STEAMDIR/compatibilitytools.d" ] || sudo -u steam mkdir -p "$STEAMDIR/compatibilitytools.d"
 sudo -u steam tar -x -C "$STEAMDIR/compatibilitytools.d/" -f "/opt/game-resources/$PROTON_TGZ"
 
-
-# Install default prefix into game compatdata path
+#############################################
+# Setup compatdata
+#############################################
 [ -d "$STEAMAPPSDIR/compatdata" ] || sudo -u steam mkdir -p "$STEAMAPPSDIR/compatdata"
 [ -d "$STEAMAPPSDIR/compatdata/2430930" ] || \
   sudo -u steam cp "$STEAMDIR/compatibilitytools.d/$PROTON_NAME/files/share/default_pfx" "$STEAMAPPSDIR/compatdata/2430930" -r
 
-# Install the systemd service file for ARK Survival Ascended Dedicated Server (Island)
+#############################################
+# Create systemd service
+#############################################
 cat > /etc/systemd/system/ark-island.service <<EOF
 [Unit]
 Description=ARK Survival Ascended Dedicated Server (Island)
@@ -126,8 +159,10 @@ RestartSec=20s
 WantedBy=multi-user.target
 EOF
 
+#############################################
+# Install xaudio
+#############################################
 SCRIPT_DIR="$(cd "$(dirname "$0")" && pwd)"
-
 XAUDIO_SRC="$SCRIPT_DIR/xaudio2_9.dll"
 XAUDIO_DST="$STEAMAPPSDIR/common/ARK Survival Ascended Dedicated Server/ShooterGame/Binaries/Win64/xaudio2_9.dll"
 
@@ -139,12 +174,16 @@ fi
 sudo -u steam cp "$XAUDIO_SRC" "$XAUDIO_DST"
 sudo -u steam chmod 644 "$XAUDIO_DST"
 
+#############################################
+# Enable & Start Service
+#############################################
 systemctl daemon-reload
 systemctl enable ark-island
 systemctl start ark-island
 
-
-# Create some helpful links for the user.
+#############################################
+# Helpful Symlinks
+#############################################
 [ -e "/home/steam/island-Game.ini" ] || \
   sudo -u steam ln -s "$STEAMAPPSDIR/common/ARK Survival Ascended Dedicated Server/ShooterGame/Saved/Config/WindowsServer/Game.ini" /home/steam/island-Game.ini
 
@@ -161,4 +200,6 @@ echo "To restart the server: sudo systemctl restart ark-island"
 echo "To start the server:   sudo systemctl start ark-island"
 echo "To stop the server:    sudo systemctl stop ark-island"
 echo ""
-echo "Configuration is available in /home/steam/island-Game.ini, /home/steam/island-GameUserSettings.ini"
+echo "Configuration:"
+echo "/home/steam/island-Game.ini"
+echo "/home/steam/island-GameUserSettings.ini"
