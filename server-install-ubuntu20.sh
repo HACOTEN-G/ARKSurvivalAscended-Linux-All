@@ -23,6 +23,13 @@ if [ -f /etc/systemd/system/ark-island.service ]; then
   echo "Old service removed."
 fi
 
+# /opt/ARK completely remove if exists
+if [ -d /opt/ARK ]; then
+  echo "Removing /opt/ARK directory..."
+  rm -rf /opt/ARK
+  echo "/opt/ARK removed."
+fi
+
 #############################################
 # Create Swap (16GB if not exists)
 #############################################
@@ -108,15 +115,18 @@ for ((i=1; i<=MAX_RETRIES; i++)); do
 
   sudo -u steam /usr/games/steamcmd \
     +login anonymous \
-    +force_install_dir /home/steam/Steam/steamapps/common/ARK\ Survival\ Ascended\ Dedicated\ Server \
+    +force_install_dir /home/steam/Steam/steamapps/common/ARKSurvivalAscendedDedicatedServer \
     +app_update $APP_ID validate \
     +quit
 
   # 成功判定（インストールフォルダの存在チェック）
-if [ -d "$STEAMAPPSDIR/common/ARK Survival Ascended Dedicated Server" ]; then
+INSTALL_DIR="/home/steam/Steam/steamapps/common/ARKSurvivalAscendedDedicatedServer"
+
+if [ -d "$INSTALL_DIR" ] || \
+   [ -d "/home/steam/.local/share/Steam/steamapps/common/ARKSurvivalAscendedDedicatedServer" ]; then
     echo "App installation successful."
     break
-  fi
+fi
 
   if [ "$i" -lt "$MAX_RETRIES" ]; then
     echo "Install failed. Retrying in $RETRY_DELAY seconds..."
@@ -176,7 +186,7 @@ Type=simple
 LimitNOFILE=10000
 User=steam
 Group=steam
-WorkingDirectory=$STEAMAPPSDIR/common/ARK Survival Ascended Dedicated Server/ShooterGame/Binaries/Win64
+WorkingDirectory=$STEAMAPPSDIR/common/ARKSurvivalAscendedDedicatedServer/ShooterGame/Binaries/Win64
 Environment=XDG_RUNTIME_DIR=/run/user/$(id -u)
 Environment="STEAM_COMPAT_CLIENT_INSTALL_PATH=$STEAMDIR"
 Environment="STEAM_COMPAT_DATA_PATH=$STEAMAPPSDIR/compatdata/2430930"
@@ -193,7 +203,7 @@ EOF
 #############################################
 SCRIPT_DIR="$(cd "$(dirname "$0")" && pwd)"
 XAUDIO_SRC="$SCRIPT_DIR/xaudio2_9.dll"
-XAUDIO_DST="$STEAMAPPSDIR/common/ARK Survival Ascended Dedicated Server/ShooterGame/Binaries/Win64/xaudio2_9.dll"
+XAUDIO_DST="$STEAMAPPSDIR/common/ARKSurvivalAscendedDedicatedServer/ShooterGame/Binaries/Win64/xaudio2_9.dll"
 
 if [ ! -f "$XAUDIO_SRC" ]; then
   echo "xaudio2_9.dll not found next to install script" >&2
@@ -208,7 +218,7 @@ sudo -u steam chmod 644 "$XAUDIO_DST"
 #############################################
 
 GAMEINI_SRC="$SCRIPT_DIR/Game.ini"
-GAMEINI_DST="$STEAMAPPSDIR/common/ARK Survival Ascended Dedicated Server/ShooterGame/Saved/Config/WindowsServer/Game.ini"
+GAMEINI_DST="$STEAMAPPSDIR/common/ARKSurvivalAscendedDedicatedServer/ShooterGame/Saved/Config/WindowsServer/Game.ini"
 
 if [ ! -f "$GAMEINI_SRC" ]; then
   echo "Game.ini not found next to install script" >&2
@@ -283,13 +293,13 @@ systemctl start ark-island
 # Helpful Symlinks
 #############################################
 [ -e "/home/steam/island-Game.ini" ] || \
-  sudo -u steam ln -s "$STEAMAPPSDIR/common/ARK Survival Ascended Dedicated Server/ShooterGame/Saved/Config/WindowsServer/Game.ini" /home/steam/island-Game.ini
+  sudo -u steam ln -s "$STEAMAPPSDIR/common/ARKSurvivalAscendedDedicatedServer/ShooterGame/Saved/Config/WindowsServer/Game.ini" /home/steam/island-Game.ini
 
 [ -e "/home/steam/island-GameUserSettings.ini" ] || \
-  sudo -u steam ln -s "$STEAMAPPSDIR/common/ARK Survival Ascended Dedicated Server/ShooterGame/Saved/Config/WindowsServer/GameUserSettings.ini" /home/steam/island-GameUserSettings.ini
+  sudo -u steam ln -s "$STEAMAPPSDIR/common/ARKSurvivalAscendedDedicatedServer/ShooterGame/Saved/Config/WindowsServer/GameUserSettings.ini" /home/steam/island-GameUserSettings.ini
 
 [ -e "/home/steam/island-ShooterGame.log" ] || \
-  sudo -u steam ln -s "$STEAMAPPSDIR/common/ARK Survival Ascended Dedicated Server/ShooterGame/Saved/Logs/ShooterGame.log" /home/steam/island-ShooterGame.log
+  sudo -u steam ln -s "$STEAMAPPSDIR/common/ARKSurvivalAscendedDedicatedServer/ShooterGame/Saved/Logs/ShooterGame.log" /home/steam/island-ShooterGame.log
 
 echo "================================================================================"
 echo "If everything went well, ARK Survival Ascended should be installed and starting!"
