@@ -13,6 +13,7 @@ SERVICE_DIR="/etc/systemd/system"
 APP_ID=2430930
 
 declare -A MAPS=(
+  ["island"]="TheIsland_WP"
   ["ScorchedEarth"]="ScorchedEarth_WP"
   ["Center"]="Center_WP"
   ["Aberration"]="Aberration_WP"
