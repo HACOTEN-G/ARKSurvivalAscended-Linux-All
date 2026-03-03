@@ -224,6 +224,55 @@ sudo -u steam chmod 644 "$GAMEINI_DST"
 echo "Game.ini installed."
 
 #############################################
+# Create MAP-specific services (No auto start)
+#############################################
+
+BASE_SERVICE="/etc/systemd/system/ark-island.service"
+
+if [ ! -f "$BASE_SERVICE" ]; then
+  echo "Base service ark-island.service not found." >&2
+  exit 1
+fi
+
+# MAP定義（必要に応じて追加）
+declare -A MAPS=(
+  ["ScorchedEarth"]="ScorchedEarth_WP"
+  ["Center"]="Center_WP"
+  ["Aberration"]="Aberration_WP"
+  ["Extinction"]="Extinction_WP"
+  ["Astraeos"]="Astraeos_WP"
+  ["Ragnarok"]="Ragnarok_WP"
+  ["Valguero"]="Valguero_WP"
+  ["LostColony"]="LostColony_WP"
+)
+
+echo "Creating additional MAP services..."
+
+for MAP_KEY in "${!MAPS[@]}"; do
+
+  MAP_INTERNAL="${MAPS[$MAP_KEY]}"
+  NEW_SERVICE="/etc/systemd/system/ark-${MAP_KEY}.service"
+
+  echo "Creating $NEW_SERVICE"
+
+  cp "$BASE_SERVICE" "$NEW_SERVICE"
+
+  # Description書き換え
+  sed -i "s/(Island)/(${MAP_KEY^})/g" "$NEW_SERVICE"
+
+  # ExecStart内のMAP名を書き換え
+  sed -i "s/TheIsland_WP/${MAP_INTERNAL}/g" "$NEW_SERVICE"
+
+done
+
+systemctl daemon-reload
+
+echo "MAP services created."
+echo "You can switch maps manually using:"
+echo "  sudo systemctl stop ark-island"
+echo "  sudo systemctl start ark-astraeos"
+
+#############################################
 # Enable & Start Service
 #############################################
 systemctl daemon-reload
