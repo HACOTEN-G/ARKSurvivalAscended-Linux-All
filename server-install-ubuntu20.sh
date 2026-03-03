@@ -12,22 +12,22 @@ fi
 #############################################
 # Stop & Remove Existing Service (Safe Check)
 #############################################
-if [ -f /etc/systemd/system/ark-island.service ]; then
-  echo "Existing ark-island.service found. Stopping and removing..."
+if [ -f /etc/systemd/system/ark-server.service ]; then
+  echo "Existing ark-server.service found. Stopping and removing..."
 
-  systemctl stop ark-island 2>/dev/null || true
-  systemctl disable ark-island 2>/dev/null || true
-  rm -f /etc/systemd/system/ark-island.service
+  systemctl stop ark-server 2>/dev/null || true
+  systemctl disable ark-server 2>/dev/null || true
+  rm -f /etc/systemd/system/ark-server.service
   systemctl daemon-reload
 
   echo "Old service removed."
 fi
 
 # /opt/ARK completely remove if exists
-if [ -d /opt/ARK ]; then
-  echo "Removing /opt/ARK directory..."
-  rm -rf /opt/ARK
-  echo "/opt/ARK removed."
+if [ -d /opt/ark ]; then
+  echo "Removing /opt/ark directory..."
+  rm -rf /opt/ark
+  echo "/opt/ark removed."
 fi
 
 #############################################
