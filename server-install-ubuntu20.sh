@@ -94,9 +94,38 @@ fi
 [ -d /home/steam ] || useradd -m -U steam
 
 #############################################
-# Install ARK: Survival Ascended Dedicated
+# Install ARK: Survival Ascended Dedicated (Retry Logic)
 #############################################
-sudo -u steam /usr/games/steamcmd +login anonymous +app_update 2430930 validate +quit
+
+APP_ID=2430930
+MAX_RETRIES=3
+RETRY_DELAY=10
+
+echo "Installing app $APP_ID ..."
+
+for ((i=1; i<=MAX_RETRIES; i++)); do
+  echo "Attempt $i / $MAX_RETRIES"
+
+  sudo -u steam /usr/games/steamcmd \
+    +login anonymous \
+    +force_install_dir /home/steam/Steam/steamapps/common/ARK\ Survival\ Ascended\ Dedicated\ Server \
+    +app_update $APP_ID validate \
+    +quit
+
+  # 成功判定（インストールフォルダの存在チェック）
+  if [ -d "/home/steam/Steam/steamapps/common/ARK Survival Ascended Dedicated Server" ]; then
+    echo "App installation successful."
+    break
+  fi
+
+  if [ "$i" -lt "$MAX_RETRIES" ]; then
+    echo "Install failed. Retrying in $RETRY_DELAY seconds..."
+    sleep $RETRY_DELAY
+  else
+    echo "ERROR: Failed to install app after $MAX_RETRIES attempts." >&2
+    exit 1
+  fi
+done
 
 #############################################
 # Detect Steam directory
