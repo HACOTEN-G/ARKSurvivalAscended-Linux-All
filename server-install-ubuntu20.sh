@@ -123,7 +123,7 @@ for ((i=1; i<=MAX_RETRIES; i++)); do
 INSTALL_DIR="/home/steam/Steam/steamapps/common/ARKSurvivalAscendedDedicatedServer"
 
 if [ -d "$INSTALL_DIR" ] || \
-   [ -d "/home/steam/.local/share/Steam/steamapps/common/ARKSurvivalAscendedDedicatedServer" ]; then
+   [ -d "/home/steam/.local/share/Steam/steamapps/common/ARKSurvivalAscendedDedicatedServer/ShooterGame/Saved/Config/WindowsServer" ]; then
     echo "App installation successful."
     break
 fi
