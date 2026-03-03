@@ -1,11 +1,11 @@
 #!/bin/bash
 
 #############################################
-# ARK サービス一括オプション変更＋アップデート
+# ARK Bulk Service Option Change + Update
 #############################################
 
 if [ "$EUID" -ne 0 ]; then
-  echo "rootで実行してください（sudo ./update-ark-services.sh）"
+  echo "Please run as root (sudo ./update-ark-services.sh)"
   exit 1
 fi
 
@@ -24,18 +24,18 @@ declare -A MAPS=(
 )
 
 echo "==========================================="
-echo " ARK サービス設定変更ツール"
+echo " ARK Service Configuration Tool"
 echo "==========================================="
 
 #############################################
-# ① 対象選択
+# ① Select Target
 #############################################
 
 echo ""
-echo "① 変更対象を選択してください"
-echo "1) 全MAP"
-echo "2) 単一MAP"
-read -p "番号を入力: " TARGET_TYPE
+echo "① Select target to modify"
+echo "1) All MAPs"
+echo "2) Single MAP"
+read -p "Enter number: " TARGET_TYPE
 
 TARGET_SERVICES=()
 
@@ -51,26 +51,26 @@ elif [ "$TARGET_TYPE" == "2" ]; then
     echo "$i) $MAP"
     ((i++))
   done
-  read -p "番号を選択: " MAP_INDEX
+  read -p "Select number: " MAP_INDEX
   SELECTED_MAP="${MAP_KEYS[$((MAP_INDEX-1))]}"
   TARGET_SERVICES+=("ark-${SELECTED_MAP}.service")
 else
-  echo "入力エラー"
+  echo "Input error"
   exit 1
 fi
 
 #############################################
-# サービス停止
+# Stop Services
 #############################################
 
 echo ""
-echo "対象サービスを停止します..."
+echo "Stopping target services..."
 for SVC in "${TARGET_SERVICES[@]}"; do
   systemctl stop "$SVC" 2>/dev/null
 done
 
 #############################################
-# 現在のExecStart取得（最初の1つから取得）
+# Get Current ExecStart
 #############################################
 
 FIRST_SERVICE="${SERVICE_DIR}/${TARGET_SERVICES[0]}"
@@ -83,39 +83,43 @@ CURRENT_PLATFORM=$(echo "$CURRENT_LINE" | grep -o "ServerPlatform=[^ ]*" | cut -
 CURRENT_MODS=$(echo "$CURRENT_LINE" | grep -o "mods=[^ ]*" | cut -d= -f2)
 
 #############################################
-# ② サーバー名
+# ② Server Name
 #############################################
 
 SESSION_NAME="$CURRENT_SESSION"
-read -p "② サーバー名を変更しますか？ (現在: $CURRENT_SESSION) (y/n): " CHANGE
+read -p "② Change server name? (Current: $CURRENT_SESSION) (y/n): " CHANGE
 if [ "$CHANGE" == "y" ]; then
-  read -p "新しいサーバー名: " SESSION_NAME
+  read -p "New server name: " SESSION_NAME
 fi
 
 #############################################
-# ③ パスワード
+# ③ Password
 #############################################
 
 SERVER_PASS="$CURRENT_PASS"
-read -p "③ パスワードを変更しますか？ (現在: $CURRENT_PASS) (y/n): " CHANGE
+read -p "③ Change password? (Current: $CURRENT_PASS) (y/n): " CHANGE
 if [ "$CHANGE" == "y" ]; then
-  read -p "新しいパスワード: " SERVER_PASS
+  read -p "New password: " SERVER_PASS
 fi
 
 #############################################
-# ④ プラットフォーム
+# ④ Platform
 #############################################
 
 PLATFORM="$CURRENT_PLATFORM"
-read -p "④ プラットフォームを変更しますか？ (現在: $CURRENT_PLATFORM) (y/n): " CHANGE
+read -p "④ Change platform? (Current: $CURRENT_PLATFORM) (y/n): " CHANGE
 if [ "$CHANGE" == "y" ]; then
-  echo "1) PC  2) XSX  3) PS5"
-  read -p "番号を入力: " PLATFORM_TYPE
+  echo "1) PC only"
+  echo "2) XSX only"
+  echo "3) PS5 only"
+  echo "4) PC+XSX+PS5 (Allow All)"
+  read -p "Enter number: " PLATFORM_TYPE
   case $PLATFORM_TYPE in
     1) PLATFORM="PC" ;;
     2) PLATFORM="XSX" ;;
     3) PLATFORM="PS5" ;;
-    *) echo "入力エラー"; exit 1 ;;
+    4) PLATFORM="PC+XSX+PS5" ;;
+    *) echo "Input error"; exit 1 ;;
   esac
 fi
 
@@ -124,31 +128,31 @@ fi
 #############################################
 
 MOD_IDS="$CURRENT_MODS"
-read -p "⑤ MODを変更しますか？ (現在: ${CURRENT_MODS:-なし}) (y/n): " CHANGE
+read -p "⑤ Change MODs? (Current: ${CURRENT_MODS:-None}) (y/n): " CHANGE
 if [ "$CHANGE" == "y" ]; then
-  read -p "MOD ID（カンマ区切り・空で無し）: " MOD_IDS
+  read -p "MOD IDs (comma-separated, leave empty for none): " MOD_IDS
 fi
 
 #############################################
-# 最終確認
+# Final Confirmation
 #############################################
 
 echo ""
 echo "-------------------------------------------"
-echo "最終設定:"
-echo " サーバー名: $SESSION_NAME"
-echo " パスワード: $SERVER_PASS"
-echo " プラットフォーム: $PLATFORM"
-echo " MOD: ${MOD_IDS:-なし}"
+echo "Final settings:"
+echo " Server Name: $SESSION_NAME"
+echo " Password: $SERVER_PASS"
+echo " Platform: $PLATFORM"
+echo " MODs: ${MOD_IDS:-None}"
 echo "-------------------------------------------"
-read -p "この内容で更新しますか？ (y/n): " CONFIRM
+read -p "Apply these changes? (y/n): " CONFIRM
 [ "$CONFIRM" != "y" ] && exit 0
 
 #############################################
-# ExecStart更新
+# Update ExecStart
 #############################################
 
-BASE_FLAGS="-NoBattlEye -lowmemory -nomemorybias -ServerPlatform=${PLATFORM}"
+BASE_FLAGS="-ServerPlatform=${PLATFORM}"
 [ -n "$MOD_IDS" ] && BASE_FLAGS="$BASE_FLAGS -mods=${MOD_IDS}"
 
 for SVC in "${TARGET_SERVICES[@]}"; do
@@ -162,24 +166,24 @@ for SVC in "${TARGET_SERVICES[@]}"; do
 
   sed -i "s|^ExecStart=.*|${NEW_EXEC}|g" "$SERVICE_FILE"
 
-  echo "更新完了: $SVC"
+  echo "Update completed: $SVC"
 
 done
 
 systemctl daemon-reload
 
 #############################################
-# サーバーアップデート実行
+# Run Server Update
 #############################################
 
 echo ""
-echo "サーバーアップデートを実行します..."
+echo "Running server update..."
 sudo -u steam /usr/games/steamcmd +login anonymous +app_update ${APP_ID} validate +quit
 
 echo ""
 echo "==========================================="
-echo " 設定変更とアップデートが完了しました"
+echo " Configuration update and server update completed"
 echo "==========================================="
 echo ""
-echo "起動する場合:"
-echo " sudo systemctl start サービス名"
+echo "To start a service:"
+echo " sudo systemctl start <service-name>"
