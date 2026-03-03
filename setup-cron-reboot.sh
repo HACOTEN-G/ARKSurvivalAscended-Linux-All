@@ -1,68 +1,68 @@
 #!/bin/bash
 
 #############################################
-# ARK サーバー 自動再起動 cron 設定スクリプト
+# ARK Server Auto-Reboot Cron Setup Script
 #############################################
 
 if [ "$EUID" -ne 0 ]; then
-  echo "rootで実行してください。"
-  echo "例: sudo ./setup-cron-reboot.sh"
+  echo "Please run this script as root."
+  echo "Example: sudo ./setup-cron-reboot.sh"
   exit 1
 fi
 
 echo "==========================================="
-echo " ARK サーバー 自動再起動設定"
+echo " ARK Server Auto Reboot Setup"
 echo "==========================================="
 echo ""
 
-read -p "再起動する時刻（0-23時）を入力してください: " REBOOT_HOUR
+read -p "Enter the reboot hour (0-23): " REBOOT_HOUR
 
 if ! [[ "$REBOOT_HOUR" =~ ^([0-9]|1[0-9]|2[0-3])$ ]]; then
-  echo "時刻の入力が不正です。0〜23の数字で入力してください。"
+  echo "Invalid time. Please enter a number between 0 and 23."
   exit 1
 fi
 
 echo ""
-echo "再起動の頻度を選択してください:"
-echo "1) 毎日"
-echo "2) 毎週"
-read -p "番号を入力 (1 or 2): " SCHEDULE_TYPE
+echo "Select reboot frequency:"
+echo "1) Daily"
+echo "2) Weekly"
+read -p "Enter number (1 or 2): " SCHEDULE_TYPE
 
 if [ "$SCHEDULE_TYPE" == "1" ]; then
   CRON_ENTRY="0 $REBOOT_HOUR * * * /usr/sbin/shutdown -r now"
-  DESCRIPTION="毎日 ${REBOOT_HOUR}:00 に再起動"
+  DESCRIPTION="Reboot daily at ${REBOOT_HOUR}:00"
 elif [ "$SCHEDULE_TYPE" == "2" ]; then
   echo ""
-  echo "曜日を選択してください:"
-  echo "0=日 1=月 2=火 3=水 4=木 5=金 6=土"
-  read -p "曜日番号 (0-6): " WEEKDAY
+  echo "Select day of the week:"
+  echo "0=Sun 1=Mon 2=Tue 3=Wed 4=Thu 5=Fri 6=Sat"
+  read -p "Enter weekday number (0-6): " WEEKDAY
 
   if ! [[ "$WEEKDAY" =~ ^[0-6]$ ]]; then
-    echo "曜日の入力が不正です。"
+    echo "Invalid weekday."
     exit 1
   fi
 
-  WEEKNAME=("日" "月" "火" "水" "木" "金" "土")
+  WEEKNAME=("Sun" "Mon" "Tue" "Wed" "Thu" "Fri" "Sat")
   CRON_ENTRY="0 $REBOOT_HOUR * * $WEEKDAY /usr/sbin/shutdown -r now"
-  DESCRIPTION="毎週 ${WEEKNAME[$WEEKDAY]}曜日 ${REBOOT_HOUR}:00 に再起動"
+  DESCRIPTION="Reboot weekly on ${WEEKNAME[$WEEKDAY]} at ${REBOOT_HOUR}:00"
 else
-  echo "選択が不正です。"
+  echo "Invalid selection."
   exit 1
 fi
 
 echo ""
 echo "-------------------------------------------"
-echo "以下の内容で設定します:"
+echo "The following settings will be applied:"
 echo "  $DESCRIPTION"
 echo "-------------------------------------------"
-read -p "この内容で設定しますか？ (y/n): " CONFIRM
+read -p "Apply these settings? (y/n): " CONFIRM
 
 if [ "$CONFIRM" != "y" ]; then
-  echo "キャンセルしました。"
+  echo "Operation cancelled."
   exit 0
 fi
 
-# 既存shutdown設定削除
+# Remove existing shutdown entries
 crontab -l 2>/dev/null | grep -v "/usr/sbin/shutdown -r now" > /tmp/cron_backup
 
 echo "$CRON_ENTRY" >> /tmp/cron_backup
@@ -71,10 +71,10 @@ rm /tmp/cron_backup
 
 echo ""
 echo "==========================================="
-echo " 設定が完了しました"
+echo " Setup completed successfully"
 echo "==========================================="
 echo ""
-echo "現在のcrontab設定:"
+echo "Current crontab configuration:"
 echo "-------------------------------------------"
 crontab -l
 echo "-------------------------------------------"
