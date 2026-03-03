@@ -113,7 +113,7 @@ for ((i=1; i<=MAX_RETRIES; i++)); do
     +quit
 
   # 成功判定（インストールフォルダの存在チェック）
-  if [ -d "/home/steam/Steam/steamapps/common/ARK Survival Ascended Dedicated Server" ]; then
+if [ -d "$STEAMAPPSDIR/common/ARK Survival Ascended Dedicated Server" ]; then
     echo "App installation successful."
     break
   fi
