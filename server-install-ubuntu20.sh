@@ -204,6 +204,26 @@ sudo -u steam cp "$XAUDIO_SRC" "$XAUDIO_DST"
 sudo -u steam chmod 644 "$XAUDIO_DST"
 
 #############################################
+# Install default Game.ini
+#############################################
+
+GAMEINI_SRC="$SCRIPT_DIR/Game.ini"
+GAMEINI_DST="$STEAMAPPSDIR/common/ARK Survival Ascended Dedicated Server/ShooterGame/Saved/Config/WindowsServer/Game.ini"
+
+if [ ! -f "$GAMEINI_SRC" ]; then
+  echo "Game.ini not found next to install script" >&2
+  exit 1
+fi
+
+echo "Installing default Game.ini..."
+
+sudo -u steam mkdir -p "$(dirname "$GAMEINI_DST")"
+sudo -u steam cp "$GAMEINI_SRC" "$GAMEINI_DST"
+sudo -u steam chmod 644 "$GAMEINI_DST"
+
+echo "Game.ini installed."
+
+#############################################
 # Enable & Start Service
 #############################################
 systemctl daemon-reload
