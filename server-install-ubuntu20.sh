@@ -106,7 +106,8 @@ fi
 
 APP_ID=2430930
 MAX_RETRIES=3
-RETRY_DELAY=10
+RETRY_DELAY=15
+LOG_FILE="/tmp/steamcmd_ark_install.log"
 
 echo "Installing app $APP_ID ..."
 
@@ -117,16 +118,13 @@ for ((i=1; i<=MAX_RETRIES; i++)); do
     +login anonymous \
     +force_install_dir /home/steam/Steam/steamapps/common/ARKSurvivalAscendedDedicatedServer \
     +app_update $APP_ID validate \
-    +quit
+    +quit | tee "$LOG_FILE"
 
-  # 成功判定（インストールフォルダの存在チェック）
-INSTALL_DIR="/home/steam/Steam/steamapps/common/ARKSurvivalAscendedDedicatedServer"
-
-if [ -d "$INSTALL_DIR" ] || \
-   [ -d "/home/steam/.local/share/Steam/steamapps/common/ARKSurvivalAscendedDedicatedServer/ShooterGame/Saved/Config/WindowsServer" ]; then
-    echo "App installation successful."
-    break
-fi
+  # 成功ログ判定
+  if grep -q "Success! App '$APP_ID'" "$LOG_FILE"; then
+      echo "App installation successful."
+      break
+  fi
 
   if [ "$i" -lt "$MAX_RETRIES" ]; then
     echo "Install failed. Retrying in $RETRY_DELAY seconds..."
