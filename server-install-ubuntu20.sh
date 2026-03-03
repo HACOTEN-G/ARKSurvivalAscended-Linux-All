@@ -299,6 +299,26 @@ systemctl start ark-island
 [ -e "/home/steam/island-ShooterGame.log" ] || \
   sudo -u steam ln -s "$STEAMAPPSDIR/common/ARKSurvivalAscendedDedicatedServer/ShooterGame/Saved/Logs/ShooterGame.log" /home/steam/island-ShooterGame.log
 
+#############################################
+# Copy helper scripts to /home/steam
+#############################################
+
+for SCRIPT_NAME in setup-cron-reboot.sh update-ark-services.sh; do
+  SCRIPT_SRC="$SCRIPT_DIR/$SCRIPT_NAME"
+  SCRIPT_DST="/home/steam/$SCRIPT_NAME"
+
+  if [ ! -f "$SCRIPT_SRC" ]; then
+    echo "$SCRIPT_NAME not found next to install script" >&2
+    exit 1
+  fi
+
+  echo "Copying $SCRIPT_NAME to /home/steam..."
+  sudo -u steam cp "$SCRIPT_SRC" "$SCRIPT_DST"
+  sudo -u steam chmod 755 "$SCRIPT_DST"
+done
+
+echo "Helper scripts copied."
+
 echo "================================================================================"
 echo "If everything went well, ARK Survival Ascended should be installed and starting!"
 echo ""
