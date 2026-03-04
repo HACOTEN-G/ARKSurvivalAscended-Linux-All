@@ -116,7 +116,6 @@ for ((i=1; i<=MAX_RETRIES; i++)); do
 
   sudo -u steam /usr/games/steamcmd \
     +login anonymous \
-    +force_install_dir /home/steam/Steam/steamapps/common/ARKSurvivalAscendedDedicatedServer \
     +app_update $APP_ID validate \
     +quit | tee "$LOG_FILE"
 
@@ -159,6 +158,33 @@ else
 fi
 
 #############################################
+# Detect ARK install directory dynamically
+#############################################
+
+APP_ID=2430930
+MANIFEST_FILE="$STEAMAPPSDIR/appmanifest_${APP_ID}.acf"
+
+if [ ! -f "$MANIFEST_FILE" ]; then
+  echo "ERROR: appmanifest file not found: $MANIFEST_FILE" >&2
+  exit 1
+fi
+
+ARK_DIR_NAME=$(grep -i '"installdir"' "$MANIFEST_FILE" | awk -F'"' '{print $4}')
+
+if [ -z "$ARK_DIR_NAME" ]; then
+  echo "ERROR: Could not determine ARK install directory." >&2
+  exit 1
+fi
+
+ARK_ROOT="$STEAMAPPSDIR/common/$ARK_DIR_NAME"
+ARK_WIN64="$ARK_ROOT/ShooterGame/Binaries/Win64"
+ARK_CONFIG_DIR="$ARK_ROOT/ShooterGame/Saved/Config/WindowsServer"
+ARK_LOG_DIR="$ARK_ROOT/ShooterGame/Saved/Logs"
+
+echo "Detected ARK directory:"
+echo "  $ARK_ROOT"
+
+#############################################
 # Install Proton GE
 #############################################
 [ -d "$STEAMDIR/compatibilitytools.d" ] || sudo -u steam mkdir -p "$STEAMDIR/compatibilitytools.d"
@@ -184,7 +210,7 @@ Type=simple
 LimitNOFILE=10000
 User=steam
 Group=steam
-WorkingDirectory=$STEAMAPPSDIR/common/ARKSurvivalAscendedDedicatedServer/ShooterGame/Binaries/Win64
+WorkingDirectory=$ARK_WIN64
 Environment=XDG_RUNTIME_DIR=/run/user/$(id -u)
 Environment="STEAM_COMPAT_CLIENT_INSTALL_PATH=$STEAMDIR"
 Environment="STEAM_COMPAT_DATA_PATH=$STEAMAPPSDIR/compatdata/2430930"
@@ -201,7 +227,7 @@ EOF
 #############################################
 SCRIPT_DIR="$(cd "$(dirname "$0")" && pwd)"
 XAUDIO_SRC="$SCRIPT_DIR/xaudio2_9.dll"
-XAUDIO_DST="$STEAMAPPSDIR/common/ARKSurvivalAscendedDedicatedServer/ShooterGame/Binaries/Win64/xaudio2_9.dll"
+XAUDIO_DST="$ARK_WIN64/xaudio2_9.dll"
 
 if [ ! -f "$XAUDIO_SRC" ]; then
   echo "xaudio2_9.dll not found next to install script" >&2
@@ -217,7 +243,7 @@ chown steam:steam "$XAUDIO_DST"
 #############################################
 
 GAMEINI_SRC="$SCRIPT_DIR/Game.ini"
-GAMEINI_DST="$STEAMAPPSDIR/common/ARKSurvivalAscendedDedicatedServer/ShooterGame/Saved/Config/WindowsServer/Game.ini"
+GAMEINI_DST="$ARK_CONFIG_DIR/Game.ini"
 
 if [ ! -f "$GAMEINI_SRC" ]; then
   echo "Game.ini not found next to install script" >&2
@@ -283,35 +309,14 @@ echo "MAP services created."
 # Helpful Symlinks
 #############################################
 [ -e "/home/steam/island-Game.ini" ] || \
-  sudo -u steam ln -s "$STEAMAPPSDIR/common/ARKSurvivalAscendedDedicatedServer/ShooterGame/Saved/Config/WindowsServer/Game.ini" /home/steam/island-Game.ini
+  sudo -u steam ln -s "$ARK_CONFIG_DIR/Game.ini" /home/steam/island-Game.ini
 
 [ -e "/home/steam/island-GameUserSettings.ini" ] || \
-  sudo -u steam ln -s "$STEAMAPPSDIR/common/ARKSurvivalAscendedDedicatedServer/ShooterGame/Saved/Config/WindowsServer/GameUserSettings.ini" /home/steam/island-GameUserSettings.ini
+  sudo -u steam ln -s "$ARK_CONFIG_DIR/GameUserSettings.ini" /home/steam/island-GameUserSettings.ini
 
 [ -e "/home/steam/island-ShooterGame.log" ] || \
-  sudo -u steam ln -s "$STEAMAPPSDIR/common/ARKSurvivalAscendedDedicatedServer/ShooterGame/Saved/Logs/ShooterGame.log" /home/steam/island-ShooterGame.log
+  sudo -u steam ln -s "$ARK_LOG_DIR/ShooterGame.log" /home/steam/island-ShooterGame.log
 
-#############################################
-# Copy helper scripts to /home/steam
-#############################################
-
-for SCRIPT_NAME in setup-cron-reboot.sh update-ark-services.sh; do
-  SCRIPT_SRC="$SCRIPT_DIR/$SCRIPT_NAME"
-  SCRIPT_DST="/home/steam/$SCRIPT_NAME"
-
-  if [ ! -f "$SCRIPT_SRC" ]; then
-    echo "$SCRIPT_NAME not found next to install script" >&2
-    exit 1
-  fi
-
-  echo "Copying $SCRIPT_NAME to /home/steam..."
-
-  cp "$SCRIPT_SRC" "$SCRIPT_DST"
-  chmod 755 "$SCRIPT_DST"
-  chown steam:steam "$SCRIPT_DST"
-done
-
-echo "Helper scripts copied."
 
 echo "You can switch maps manually using:"
 echo "  sudo systemctl stop ark-island"
@@ -321,8 +326,8 @@ echo "  sudo systemctl start ark-astraeos"
 # Enable & Start Service
 #############################################
 systemctl daemon-reload
-systemctl enable ark-island
-systemctl start ark-island
+#systemctl enable ark-island
+#systemctl start ark-island
 
 
 echo "================================================================================"
