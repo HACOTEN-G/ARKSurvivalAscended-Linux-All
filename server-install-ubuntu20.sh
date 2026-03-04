@@ -208,8 +208,9 @@ if [ ! -f "$XAUDIO_SRC" ]; then
   exit 1
 fi
 
-sudo -u steam cp "$XAUDIO_SRC" "$XAUDIO_DST"
-sudo -u steam chmod 644 "$XAUDIO_DST"
+cp "$XAUDIO_SRC" "$XAUDIO_DST"
+chmod 644 "$XAUDIO_DST"
+chown steam:steam "$XAUDIO_DST"
 
 #############################################
 # Install default Game.ini
@@ -225,8 +226,9 @@ fi
 
 echo "Installing default Game.ini..."
 
-sudo -u steam cp "$GAMEINI_SRC" "$GAMEINI_DST"
-sudo -u steam chmod 644 "$GAMEINI_DST"
+cp "$GAMEINI_SRC" "$GAMEINI_DST"
+chmod 644 "$GAMEINI_DST"
+chown steam:steam "$GAMEINI_DST"
 
 echo "Game.ini installed."
 
@@ -312,8 +314,10 @@ for SCRIPT_NAME in setup-cron-reboot.sh update-ark-services.sh; do
   fi
 
   echo "Copying $SCRIPT_NAME to /home/steam..."
-  sudo -u steam cp "$SCRIPT_SRC" "$SCRIPT_DST"
-  sudo -u steam chmod 755 "$SCRIPT_DST"
+
+  cp "$SCRIPT_SRC" "$SCRIPT_DST"
+  chmod 755 "$SCRIPT_DST"
+  chown steam:steam "$SCRIPT_DST"
 done
 
 echo "Helper scripts copied."
