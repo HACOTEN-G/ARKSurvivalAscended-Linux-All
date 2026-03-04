@@ -239,6 +239,13 @@ chmod 644 "$XAUDIO_DST"
 chown steam:steam "$XAUDIO_DST"
 
 #############################################
+# Enable & Start Service
+#############################################
+systemctl daemon-reload
+systemctl enable ark-island
+systemctl start ark-island
+
+#############################################
 # Install default Game.ini
 #############################################
 
@@ -322,12 +329,7 @@ echo "You can switch maps manually using:"
 echo "  sudo systemctl stop ark-island"
 echo "  sudo systemctl start ark-astraeos"
 
-#############################################
-# Enable & Start Service
-#############################################
-systemctl daemon-reload
-#systemctl enable ark-island
-#systemctl start ark-island
+
 
 
 echo "================================================================================"
