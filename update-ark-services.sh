@@ -88,7 +88,7 @@ CURRENT_MODS=$(echo "$CURRENT_LINE" | grep -o "mods=[^ ]*" | cut -d= -f2)
 #############################################
 
 SESSION_NAME="$CURRENT_SESSION"
-read -p "② Change server name? (Current: $CURRENT_SESSION) (y/n): " CHANGE
+read -p "② Change server name? (y/n): " CHANGE
 if [ "$CHANGE" == "y" ]; then
   read -p "New server name: " SESSION_NAME
 fi
@@ -98,7 +98,7 @@ fi
 #############################################
 
 SERVER_PASS="$CURRENT_PASS"
-read -p "③ Change password? (Current: $CURRENT_PASS) (y/n): " CHANGE
+read -p "③ Change password? (y/n): " CHANGE
 if [ "$CHANGE" == "y" ]; then
   read -p "New password: " SERVER_PASS
 fi
@@ -108,7 +108,7 @@ fi
 #############################################
 
 PLATFORM="$CURRENT_PLATFORM"
-read -p "④ Change platform? (Current: $CURRENT_PLATFORM) (y/n): " CHANGE
+read -p "④ Change platform? (y/n): " CHANGE
 if [ "$CHANGE" == "y" ]; then
   echo "1) PC only"
   echo "2) XSX only"
@@ -129,7 +129,7 @@ fi
 #############################################
 
 MOD_IDS="$CURRENT_MODS"
-read -p "⑤ Change MODs? (Current: ${CURRENT_MODS:-None}) (y/n): " CHANGE
+read -p "⑤ Change MODs? (y/n): " CHANGE
 if [ "$CHANGE" == "y" ]; then
   read -p "MOD IDs (comma-separated, leave empty for none): " MOD_IDS
 fi
