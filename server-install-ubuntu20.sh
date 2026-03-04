@@ -225,7 +225,6 @@ fi
 
 echo "Installing default Game.ini..."
 
-sudo -u steam mkdir -p "$(dirname "$GAMEINI_DST")"
 sudo -u steam cp "$GAMEINI_SRC" "$GAMEINI_DST"
 sudo -u steam chmod 644 "$GAMEINI_DST"
 
