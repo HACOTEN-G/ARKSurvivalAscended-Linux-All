@@ -277,16 +277,7 @@ done
 systemctl daemon-reload
 
 echo "MAP services created."
-echo "You can switch maps manually using:"
-echo "  sudo systemctl stop ark-island"
-echo "  sudo systemctl start ark-astraeos"
 
-#############################################
-# Enable & Start Service
-#############################################
-systemctl daemon-reload
-systemctl enable ark-island
-systemctl start ark-island
 
 #############################################
 # Helpful Symlinks
@@ -321,6 +312,18 @@ for SCRIPT_NAME in setup-cron-reboot.sh update-ark-services.sh; do
 done
 
 echo "Helper scripts copied."
+
+echo "You can switch maps manually using:"
+echo "  sudo systemctl stop ark-island"
+echo "  sudo systemctl start ark-astraeos"
+
+#############################################
+# Enable & Start Service
+#############################################
+systemctl daemon-reload
+systemctl enable ark-island
+systemctl start ark-island
+
 
 echo "================================================================================"
 echo "If everything went well, ARK Survival Ascended should be installed and starting!"
