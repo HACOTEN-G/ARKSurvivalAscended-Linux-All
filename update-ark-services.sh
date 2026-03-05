@@ -179,18 +179,6 @@ done
 
 systemctl daemon-reload
 
-#############################################
-# Run Server Update
-#############################################
-
-echo ""
-echo "Running server update..."
-sudo -u steam /usr/games/steamcmd +login anonymous +app_update ${APP_ID} validate +quit
-
-echo ""
-echo "==========================================="
-echo " Configuration update and server update completed"
-echo "==========================================="
 echo ""
 echo "To start a service:"
 echo " sudo systemctl start <service-name>"
