@@ -161,9 +161,15 @@ for SVC in "${TARGET_SERVICES[@]}"; do
   SERVICE_FILE="${SERVICE_DIR}/${SVC}"
   [ ! -f "$SERVICE_FILE" ] && continue
 
-  MAP_NAME=$(grep "ArkAscendedServer.exe" "$SERVICE_FILE" | sed -E 's/.*ArkAscendedServer.exe ([^?]+).*/\1/')
+  LINE=$(grep "^ExecStart=" "$SERVICE_FILE")
 
-  NEW_EXEC="ExecStart=/home/steam/.steam/compatibilitytools.d/GE-Proton8-21/proton run ArkAscendedServer.exe ${MAP_NAME}?listen?SessionName=${SESSION_NAME}?ServerPassword=${SERVER_PASS} ${BASE_FLAGS}"
+  # MAP取得
+  MAP_NAME=$(echo "$LINE" | sed -E 's/.*ArkAscendedServer.exe ([^?]+).*/\1/')
+
+  # ArkAscendedServer.exe までの起動コマンド取得
+  EXEC_PREFIX=$(echo "$LINE" | sed -E 's/^ExecStart=(.*ArkAscendedServer\.exe).*/\1/')
+
+  NEW_EXEC="ExecStart=${EXEC_PREFIX} ${MAP_NAME}?listen?SessionName=${SESSION_NAME}?ServerPassword=${SERVER_PASS} ${BASE_FLAGS}"
 
   sed -i "s|^ExecStart=.*|${NEW_EXEC}|g" "$SERVICE_FILE"
 
