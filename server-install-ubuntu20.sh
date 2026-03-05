@@ -245,8 +245,11 @@ systemctl daemon-reload
 systemctl enable ark-island
 systemctl start ark-island
 
-echo "Waiting 60 seconds for ARK to generate config files..."
-sleep 60
+echo "Waiting for WindowsServer config directory..."
+
+while [ ! -d "$ARK_CONFIG_DIR" ]; do
+  sleep 5
+done
 
 #############################################
 # Install default Game.ini
