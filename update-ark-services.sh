@@ -113,13 +113,13 @@ if [ "$CHANGE" == "y" ]; then
   echo "1) PC only"
   echo "2) XSX only"
   echo "3) PS5 only"
-  echo "4) PC+XSX+PS5 (Allow All)"
+  echo "4) PC+XSX+PS5+WINGDK (Allow All)"
   read -p "Enter number: " PLATFORM_TYPE
   case $PLATFORM_TYPE in
     1) PLATFORM="PC" ;;
     2) PLATFORM="XSX" ;;
     3) PLATFORM="PS5" ;;
-    4) PLATFORM="PC+XSX+PS5" ;;
+    4) PLATFORM="PC+XSX+PS5+WINGDK" ;;
     *) echo "Input error"; exit 1 ;;
   esac
 fi
