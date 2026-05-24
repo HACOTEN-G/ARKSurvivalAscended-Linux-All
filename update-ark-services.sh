@@ -71,17 +71,19 @@ for SVC in "${TARGET_SERVICES[@]}"; do
 done
 
 #############################################
-# Get Current ExecStart
+# Get Current ExecStart (from first service)
 #############################################
 
 FIRST_SERVICE="${SERVICE_DIR}/${TARGET_SERVICES[0]}"
 CURRENT_LINE=$(grep "^ExecStart=" "$FIRST_SERVICE")
 
-CURRENT_MAP=$(echo "$CURRENT_LINE" | sed -E 's/.*ArkAscendedServer.exe ([^?]+).*/\1/')
+# 修正: スペースも区切り文字に含めて MAP 名を正しく抽出
+CURRENT_MAP=$(echo "$CURRENT_LINE" | sed -E 's/.*ArkAscendedServer\.exe ([^ ?]+).*/\1/')
+
 CURRENT_SESSION=$(echo "$CURRENT_LINE" | sed -E 's/.*SessionName=([^?]+).*/\1/')
-CURRENT_PASS=$(echo "$CURRENT_LINE" | sed -E 's/.*ServerPassword=([^ ]+).*/\1/')
-CURRENT_PLATFORM=$(echo "$CURRENT_LINE" | grep -o "ServerPlatform=[^ ]*" | cut -d= -f2)
-CURRENT_MODS=$(echo "$CURRENT_LINE" | grep -o "mods=[^ ]*" | cut -d= -f2)
+CURRENT_PASS=$(echo "$CURRENT_LINE" | grep -oP 'ServerPassword=\K[^ ]+' || echo "")
+CURRENT_PLATFORM=$(echo "$CURRENT_LINE" | grep -oP 'ServerPlatform=\K[^ ]+' || echo "")
+CURRENT_MODS=$(echo "$CURRENT_LINE" | grep -oP 'mods=\K[^ ]+' || echo "")
 
 #############################################
 # ② Server Name
@@ -168,11 +170,12 @@ for SVC in "${TARGET_SERVICES[@]}"; do
 
   LINE=$(grep "^ExecStart=" "$SERVICE_FILE")
 
-  # MAP取得
-  MAP_NAME=$(echo "$LINE" | sed -E 's/.*ArkAscendedServer.exe ([^?]+).*/\1/')
+  # 修正: スペースも区切り文字に含めて MAP 名を正しく抽出
+  MAP_NAME=$(echo "$LINE" | sed -E 's/.*ArkAscendedServer\.exe ([^ ?]+).*/\1/')
 
-  # ArkAscendedServer.exe までの起動コマンド取得
-  EXEC_PREFIX=$(echo "$LINE" | sed -E 's/^ExecStart=(.*ArkAscendedServer\.exe).*/\1/')
+  # 修正: 「proton run ArkAscendedServer.exe」までを最短一致で切り出す
+  #        これにより前マップ名がプレフィックスに混入するバグを修正
+  EXEC_PREFIX=$(echo "$LINE" | sed -E 's/^ExecStart=([^ ]+ run ArkAscendedServer\.exe).*/\1/')
 
   NEW_EXEC="ExecStart=${EXEC_PREFIX} ${MAP_NAME}?listen?SessionName=${SESSION_NAME}?ServerPassword=${SERVER_PASS} ${BASE_FLAGS}"
 
