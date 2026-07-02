@@ -34,7 +34,7 @@ Quick run (if you trust me, which you of course should not):
 mkdir git && cd $_
 ```
 ```bash
-git clone https://github.com/HACOTEN-G/ARKSurvivalAscended-Linux.git
+git clone https://github.com/HACOTEN-G/ARKSurvivalAscended-Linux-All.git
 ```
 ```bash
 cd ARKSurvivalAscended-Linux/
