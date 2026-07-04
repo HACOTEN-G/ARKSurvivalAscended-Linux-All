@@ -22,6 +22,7 @@ declare -A MAPS=(
   ["Ragnarok"]="Ragnarok_WP"
   ["Valguero"]="Valguero_WP"
   ["LostColony"]="LostColony_WP"
+  ["Genesis"]="Genesis_WP"
 )
 
 echo "==========================================="
