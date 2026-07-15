@@ -115,6 +115,7 @@ for ((i=1; i<=MAX_RETRIES; i++)); do
   echo "Attempt $i / $MAX_RETRIES"
 
   sudo -u steam /usr/games/steamcmd \
+    +@sSteamCmdForcePlatformType windows \
     +login anonymous \
     +app_update $APP_ID validate \
     +quit | tee "$LOG_FILE"
