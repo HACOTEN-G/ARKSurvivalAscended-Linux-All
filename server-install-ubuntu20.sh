@@ -286,7 +286,7 @@ fi
 # MAP定義（必要に応じて追加）
 declare -A MAPS=(
   ["ScorchedEarth"]="ScorchedEarth_WP"
-  ["Center"]="Center_WP"
+  ["Center"]="TheCenter_WP"
   ["Aberration"]="Aberration_WP"
   ["Extinction"]="Extinction_WP"
   ["Astraeos"]="Astraeos_WP"
