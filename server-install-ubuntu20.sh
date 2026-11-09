@@ -31,21 +31,36 @@ if [ -d /opt/ark ]; then
 fi
 
 #############################################
-# Create Swap (16GB if not exists)
+# Create Swap (20GB - recreate if exists)
 #############################################
-if ! swapon --show | grep -q "/swapfile"; then
-  echo "Creating 16GB swapfile..."
+SWAPFILE="/swapfile"
+SWAP_SIZE_GB=20
 
-  fallocate -l 16G /swapfile || dd if=/dev/zero of=/swapfile bs=1M count=16384
-  chmod 600 /swapfile
-  mkswap /swapfile
-  swapon /swapfile
-  echo "/swapfile none swap sw 0 0" >> /etc/fstab
+if [ -e "$SWAPFILE" ]; then
+  echo "Existing $SWAPFILE found. Removing and recreating..."
 
-  echo "Swap created and enabled."
-else
-  echo "Swap already exists. Skipping swap creation."
+  # Disable if currently active
+  if swapon --show=NAME --noheadings | grep -qx "$SWAPFILE"; then
+    swapoff "$SWAPFILE" || { echo "ERROR: Failed to swapoff $SWAPFILE" >&2; exit 1; }
+  fi
+
+  rm -f "$SWAPFILE"
+
+  # Remove old fstab entry to avoid duplicates
+  sed -i "\|^$SWAPFILE[[:space:]]|d" /etc/fstab
+
+  echo "Old swapfile removed."
 fi
+
+echo "Creating ${SWAP_SIZE_GB}GB swapfile..."
+
+fallocate -l ${SWAP_SIZE_GB}G "$SWAPFILE" || dd if=/dev/zero of="$SWAPFILE" bs=1M count=$((SWAP_SIZE_GB * 1024))
+chmod 600 "$SWAPFILE"
+mkswap "$SWAPFILE"
+swapon "$SWAPFILE"
+echo "$SWAPFILE none swap sw 0 0" >> /etc/fstab
+
+echo "Swap created and enabled."
 
 #############################################
 # Working Directory
